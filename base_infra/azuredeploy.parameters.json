@@ -15,10 +15,10 @@
             "value": "<your spn tenant id>"
         },
         "windowsAdminUsername": {
-            "value": "arcdemo"
+            "value": "change this !"
         },
         "windowsAdminPassword": {
-            "value": "ArcPassword123!!"
+            "value": "change this !"
         },
         "myIpAddress": {
             "value": "<your IP address>"
