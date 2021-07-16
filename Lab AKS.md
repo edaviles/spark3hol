@@ -5,9 +5,7 @@ For the purpose of this part of the HOL you will be deploying a base AKS cluster
 
 A sample representation of this deployment will be something similar to this image below:
 
-![buildpic1.jpg](
-Images\buildpic1.jpg
-)
+![buildpic1.jpg](https://github.com/Bapic/spark3hol/blob/main/Images/activitymilestone1.jpg)
 
 # Pre-requisites:
 <li> Azure Subscription
