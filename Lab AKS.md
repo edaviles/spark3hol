@@ -5,7 +5,7 @@ For the purpose of this part of the HOL you will be deploying a base AKS cluster
 
 A sample representation of this deployment will be something similar to this image below:
 
-![buildpic1.jpg](https://github.com/Bapic/spark3hol/blob/main/Images/activitymilestone1.jpg)
+![buildpic1.jpg](https://github.com/Bapic/spark3hol/blob/main/Images/buildpic1.jpg)
 
 # Pre-requisites:
 <li> Azure Subscription
@@ -51,7 +51,7 @@ If not set the correct subscription
 # Let's get started
 There are series of activities that we will perform. Here is a simple representation. Please note that due to the continuos change of the platform and how we deploy these services, the flow image is subject to change and is not always a very updated one.
 
-![activitymilestone1.jpg](Images\activitymilestone1.jpg)
+![activitymilestone1.jpg](https://github.com/Bapic/spark3hol/blob/main/Images/activitymilestone1.jpg)
 
 ## setup the extenstions and resource providers
 
