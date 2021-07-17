@@ -32,7 +32,7 @@ To simplify the process to setup all tools and modules, we have automated the pr
 
         git clone https://github.com/Bapic/spark3hol
 
-- You can no use your favorite tool - PowerShell, VS Code or Terminal application to deploy the Admin VM:
+- You can also use your favorite tools - PowerShell, VS Code, portal or Terminal application to deploy the Admin VM:
 
         cd /sparkhol/Prereq
 
