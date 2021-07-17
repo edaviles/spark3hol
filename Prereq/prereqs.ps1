@@ -35,7 +35,7 @@ Invoke-WebRequest -Uri https://github.com/Azure/azure-cli/releases/download/azur
 
 workflow ClientTools_01
         {
-            $chocolateyAppList = 'az.powershell,kubernetes-cli,vcredist140,microsoft-edge,kubernetes-helm,vscode'
+            $chocolateyAppList = 'az.powershell,kubernetes-cli,vcredist140,microsoft-edge,kubernetes-helm,vscode,git.install'
             #Run commands in parallel.
             # add this to the list for additional tools - azure-functions-core-tools-3,azurefunctions-vscode,dotnetcore-sdk,vscode-csharp,microsoftazurestorageexplorer,azcopy10,vscode,putty.install,microsoft-windows-terminal
 

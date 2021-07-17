@@ -77,7 +77,7 @@
             "value": "arcdemo"
         },
         "adminPassword": {
-            "value": null
+            "value": ""
         },
         "patchMode": {
             "value": "AutomaticByOS"

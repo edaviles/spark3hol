@@ -1,7 +1,10 @@
-# Overview:
-The objective of this HOL is to understand, learn and experience how to deploy a cloud native application to any supported kubernetes running either on-premises, any other cloud provider locaiton or at the edge. The application here is deployed using Azure App service and Azure SQL Server managed instance. 
 
-For the purpose of this part of the HOL you will be deploying a base AKS cluster that will represent any of the locations as mentioned above. We are using AKS here to simplify deployment and to leverage the cloud  load balancer instead of creating everything from scratch at this time. You can however, use any existing supported kubernetes supported by CNCF and Azure Arc. Cloud native anywhere with Azure Arc enables you to deploy Azure cloud native services and brings the intelligent cloud services to any infrastructure.
+    * NOTE: This repo is under construction and will be having a more updated complete version in near future with more scenarios to test and work with.*
+
+# Overview:
+The objective of this HOL is to understand, learn and experience how to deploy a cloud native application to any supported kubernetes running either on-premises, any other cloud provider locaiton or at the edge. The application here is deployed using Azure App service and Azure SQL Server managed instance.
+
+For the purpose of this part of the HOL you will be deploying a base AKS cluster that will represent an on-premises location as mentioned above. We are using AKS here to simplify deployment and to leverage the cloud load balancer instead of creating everything from scratch at this time. You can however, use any existing supported kubernetes supported by CNCF and Azure Arc. Cloud native anywhere with Azure Arc enables you to deploy Azure cloud native services and brings the intelligent cloud services to any infrastructure.
 
 A sample representation of this deployment will be something similar to this image below:
 
@@ -17,38 +20,62 @@ A sample representation of this deployment will be something similar to this ima
 <li> Azure Data Studio
 <li> SQL MI and PostgreSQL extensions
 
-If you already have a system already installed with these tools. Great!  
-
-
+If you already have a system already installed with these tools. Great! Use that.  
 # Setting up the prerequisites:
-1. Azure Subscription- If you do not have one. get one here for free.
+
+1. Azure Subscription- If you do not have one. get one [here](https://azure.microsoft.com/en-in/free/) for free.
 2. Github Account- Create one if you don't have one and fork this repo.
-3. Azure CLI, HELM v3, Kubectl tool- we will use the Azure Cloud Shell
-4. SSH keys- login to Azure Cloud shell and run the below command.
+3. Azure CLI, HELM v3, Kubectl tool- we will use the Azure Cloud Shell.
+To simplify the process to setup all tools and modules, we have automated the process by deoloying a Windows 10 VM along with custom script extension. To get started:
+
+- Fork this repository to your github account using portal or by running
+
+        git clone https://github.com/Bapic/spark3hol
+
+- You can no use your favorite tool - PowerShell, VS Code or Terminal application to deploy the Admin VM:
+
+        cd /sparkhol/Prereq
+
+        prereqRgName="spark3-prereq"
+        
+        az group create --name $prereqRgName --location eastus
+
+        # change the 'adminPassword' parameter value in the parameters.json file locally.
+
+        az deployment group create --resource-group $prereqRgName --name $prereqRgName-deployment --template-uri  https://raw.githubusercontent.com/Bapic/spark3hol/main/Prereq/template.json --parameters parameters.json
+        
+        # This deployment should finish in ~20 mins. This will deploy all tools in a Windows10 VM. Please ensure to check your licensing conformance.
+
+- Login to the VM using the username and password and create a shortcut of the application C:\Program Files\Azure Data Studio\azuredatastudio application to the desktop or taskbar.
+- Launch Azure datastudio and this should now enable all extensions and python libraries. You can install them manually if not installed. We are not using these extensions at this time though. These extensions include - Azure Arc, Azure Data CLI, Azure PostgreSQL
+
+We suggest you run the below steps as well using the Admin VM created above so that all information are in the same place.
+
+4. SSH keys- login to Azure Cloud shell or to the admin created above and run the below command.
 The following ssh-keygen command generates 4096-bit SSH RSA public and private key files by default in the ~/.ssh directory. If an SSH key pair exists in the current location, those files are overwritten.
-    
+
         ssh-keygen -m PEM -t rsa -b 4096
         # not required for this scenario
 
 5. Azure Service principal- login to Azure Cloud shell and run.
         
         az login --use-device-code
-        #Ensure you are in the correct subscription
+        # Ensure you are in the correct subscription
         
         az account show 
 
-If not set the correct subscription
+6. If not set the correct subscription
         
         az account set -s <your subscription name>
-        
+
         az account list -o table
         
         az ad sp create-for-rbac -n "<Unique SP Name>" --role contributor
         
-        # copy the json output from the above command to a notepad.
-        # Keep a set of your username and password ready for later
+7. copy the json output from the above command to a notepad.
+Keep a set of your username and password ready for later for our data controller and SQL server instance. You can also choose to use the same credentials as that the admin virtual machine.
 
-# Let's get started
+# Let's get started:
 There are series of activities that we will perform. Here is a simple representation. Please note that due to the continuos change of the platform and how we deploy these services, the flow image is subject to change and is not always a very updated one.
 
 ![activitymilestone1.jpg](https://github.com/Bapic/spark3hol/blob/main/Images/activitymilestone1.jpg)
@@ -87,7 +114,7 @@ There are series of activities that we will perform. Here is a simple representa
     # Name of the AKS cluster
 
     resourceLocation="eastus"
-    # "eastus" or "westeurope" This step is very critical since these are the currently only supported regions. 
+    # "eastus" or "westeurope" This step is very critical since these are the currently only supported regions with App services anywhere. 
 
     az group create -g $aksClusterGroupName -l $resourceLocation
         
@@ -124,7 +151,7 @@ There are series of activities that we will perform. Here is a simple representa
 
     az connectedk8s show --resource-group $groupName --name $clusterName
 
-## Create a Log Analytics workspace 
+## Create a Log Analytics workspace
 
     # Once the workspace is created note the workspaceID and workspace key in an encoded format to be used with App service extension creation 
 
@@ -265,7 +292,7 @@ Browse the custom location resource using the Azure portal and note the Arc-enab
 
     kubectl get pods -n $namespace
 
-## Create two WebApps 
+## Create two Web Applications
 
     az webapp create --resource-group $groupName --plan $appPlanName --name $webAppName --runtime "DOTNETCORE|3.1"
     
@@ -291,7 +318,9 @@ Browse the custom location resource using the Azure portal and note the Arc-enab
     kubectl get pods -n $namespace
 
 ## Deploy an ASP.Net appliction using Azure App Service 'Deployment Center' to todo app 
-- Use https://github.com/azure-samples/dotnetcore-sqldb-tutorial
+- Fork the repo to your github account https://github.com/azure-samples/dotnetcore-sqldb-tutorial
+- Copy the name of your repo for "dotnetcore-sqldb-tutorial' app
+- Use this URI and Github Actions to deploy the applicaiton to your .Net core web App via 'Deployment Center'
 - Create a Application Setting with name 'MyDbConnection' and set to "Data Source=tcp:<SQL MI Public IP>,<port>;Initial Catalog=<dbname>;User Id=<username>;Password=<super secret password>;"
 
 You can create it manually or using the below command.
@@ -307,7 +336,7 @@ You can create it manually or using the below command.
 
     extensionId=$(az k8s-extension show --name arc-data-services --cluster-type connectedClusters --cluster-name $clusterName --resource-group $groupName --query id -o tsv)
 
-## Update Custom location 
+## Update Custom location
 
 This is to include data services extension with our custom location. You can either use the portal to update the location with the extension services or use the CLI below. LETS USE THE PORTAL EXPERIENCE.
 
@@ -318,7 +347,6 @@ This is to include data services extension with our custom location. You can eit
     az customlocation update --cluster-extension-ids $extensionId --host-resource-id $connectedClusterId --name $customLocationName --namespace $namespace --resource-group $groupName --location $resourceLocation
 
 Make sure you visit the Arc-enabled services for custom location using the portal or cli to ensure both data and app services are listed.
-
 
 ## Deploy a Data Controller
 
@@ -361,5 +389,6 @@ Make sure you visit the Arc-enabled services for custom location using the porta
 
 ## Check your todo application; you should be able to access and insert update values
 
+Congratulations! you have now successfully deployed a cloud native .net core application using App service anywher and an always updated SQL MI instance to a on-premises kubernetes cluster. Your target location can anywhere of your choice: any other cloud, on-prem or at the edge.
 
-Congratulations! you have now successfully deployed a cloud native .net core application using App service and always updated SQL MI instance to a kubernetes cluster. This cluster can be hosted in any location: any other cloud, on-prem or at the edge.
+    NOTE: This repo is under construction and will be having a more updated complete version in near future with more scenarios to test and work with.
