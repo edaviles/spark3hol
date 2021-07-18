@@ -388,6 +388,6 @@ Make sure you visit the Arc-enabled services for custom location using the porta
 
 ## Check your todo application; you should be able to access and insert update values
 
-Congratulations! you have now successfully deployed a cloud native .net core application using App service anywhere and an always updated SQL MI instance to an on-premises kubernetes cluster (AKS in this case though). Your target location can anywhere of your choice: any other cloud, on-prem or at the edge.
+Congratulations! you have now successfully deployed a cloud native .net core application using App service anywhere and an always updated SQL MI instance to an on-premises kubernetes cluster (AKS in this case though). Your target location can be anywhere of your choice: any other cloud, on-prem or at the edge.
 
     NOTE: This repo is under construction and will be having a more updated complete version in near future with more scenarios to test and work with.
