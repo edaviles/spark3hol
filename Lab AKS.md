@@ -2,7 +2,7 @@
     * NOTE: This repo is under construction and will be having a more updated complete version in near future with more scenarios to test and work with.*
 
 # Overview:
-The objective of this HOL is to understand, learn and experience how to deploy a cloud native application to any supported kubernetes running either on-premises, any other cloud provider locaiton or at the edge. The application here is deployed using Azure App service and Azure SQL Server managed instance.
+The objective of this HOL is to understand, learn and experience how to deploy a cloud native application to any supported kubernetes running either on-premises, any other cloud provider location or at the edge. The application will be deployed to an Azure App service (Github Actions) and Azure SQL managed instance.
 
 For the purpose of this part of the HOL you will be deploying a base AKS cluster that will represent an on-premises location as mentioned above. We are using AKS here to simplify deployment and to leverage the cloud load balancer instead of creating everything from scratch at this time. You can however, use any existing supported kubernetes supported by CNCF and Azure Arc. Cloud native anywhere with Azure Arc enables you to deploy Azure cloud native services and brings the intelligent cloud services to any infrastructure.
 
@@ -21,6 +21,7 @@ A sample representation of this deployment will be something similar to this ima
 <li> SQL MI and PostgreSQL extensions
 
 If you already have a system already installed with these tools. Great! Use that.  
+
 # Setting up the prerequisites:
 
 1. Azure Subscription- If you do not have one. get one [here](https://azure.microsoft.com/en-in/free/) for free.
@@ -51,6 +52,8 @@ To simplify the process to setup all tools and modules, we have automated the pr
 
 We suggest you run the below steps as well using the Admin VM created above so that all information are in the same place.
 
+**The best option is to use GitHub CodeSpaces. It includes all the tools and also a compatible version of AZ CLI. It is the best tool for this scenario. You can also run all the steps using codespaces from below.**
+
 4. SSH keys- login to Azure Cloud shell or to the admin created above and run the below command.
 The following ssh-keygen command generates 4096-bit SSH RSA public and private key files by default in the ~/.ssh directory. If an SSH key pair exists in the current location, those files are overwritten.
 
@@ -72,7 +75,7 @@ The following ssh-keygen command generates 4096-bit SSH RSA public and private k
         
         az ad sp create-for-rbac -n "<Unique SP Name>" --role contributor
         
-7. copy the json output from the above command to a notepad.
+7. Copy the json output from the above command to a notepad.
 Keep a set of your username and password ready for later for our data controller and SQL server instance. You can also choose to use the same credentials as that the admin virtual machine.
 
 # Let's get started:
@@ -99,9 +102,9 @@ There are series of activities that we will perform. Here is a simple representa
 
     az extension add --upgrade --yes --name arcdata
         
-    az extension add --upgrade --yes --name azdata
+    # az extension add --upgrade --yes --name azdata
 
-    az extension remove --name appservice-kube
+    # az extension remove --name appservice-kube
 
     az extension add --yes --source "https://aka.ms/appsvc/appservice_kube-latest-py2.py3-none-any.whl"
 
@@ -119,6 +122,7 @@ There are series of activities that we will perform. Here is a simple representa
     az group create -g $aksClusterGroupName -l $resourceLocation
         
     az aks create --resource-group $aksClusterGroupName --name $aksName --enable-aad --generate-ssh-keys -l $resourceLocation
+    # once created, scale the VMSS to D8S_v3
 
     infra_rg=$(az aks show --resource-group $aksClusterGroupName --name $aksName --output tsv --query nodeResourceGroup)
 
@@ -318,6 +322,7 @@ Browse the custom location resource using the Azure portal and note the Arc-enab
     kubectl get pods -n $namespace
 
 ## Deploy an ASP.Net appliction using Azure App Service 'Deployment Center' to todo app 
+
 - Fork the repo to your github account https://github.com/azure-samples/dotnetcore-sqldb-tutorial
 - Copy the name of your repo for "dotnetcore-sqldb-tutorial' app
 - Use this URI and Github Actions to deploy the applicaiton to your .Net core web App via 'Deployment Center'
@@ -381,14 +386,8 @@ Make sure you visit the Arc-enabled services for custom location using the porta
     ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
     GO
 
-    ALTER TABLE [dbo].[Todo] ADD  CONSTRAINT [PK_Todo] PRIMARY KEY CLUSTERED 
-    (
-        [ID] ASC
-    )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-    GO
-
 ## Check your todo application; you should be able to access and insert update values
 
-Congratulations! you have now successfully deployed a cloud native .net core application using App service anywher and an always updated SQL MI instance to a on-premises kubernetes cluster. Your target location can anywhere of your choice: any other cloud, on-prem or at the edge.
+Congratulations! you have now successfully deployed a cloud native .net core application using App service anywhere and an always updated SQL MI instance to an on-premises kubernetes cluster (AKS in this case though). Your target location can anywhere of your choice: any other cloud, on-prem or at the edge.
 
     NOTE: This repo is under construction and will be having a more updated complete version in near future with more scenarios to test and work with.
