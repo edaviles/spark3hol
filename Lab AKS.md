@@ -121,9 +121,8 @@ There are series of activities that we will perform. Here is a simple representa
 
     az group create -g $aksClusterGroupName -l $resourceLocation
         
-    az aks create --resource-group $aksClusterGroupName --name $aksName --enable-aad --generate-ssh-keys -l $resourceLocation
-    # once created, scale the VMSS to D8S_v3
-
+    az aks create --resource-group $aksClusterGroupName --name $aksName --node-vm-size Standard_D8s_v3 --enable-aad --generate-ssh-keys -l $resourceLocation
+    
     infra_rg=$(az aks show --resource-group $aksClusterGroupName --name $aksName --output tsv --query nodeResourceGroup)
 
 ## Create a puplic ip for our App services to be used later
