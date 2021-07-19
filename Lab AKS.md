@@ -268,6 +268,24 @@ Browse the custom location resource using the Azure portal and note the Arc-enab
     --query id \
     --output tsv)
 
+## Create the Azure Defender and Azure Monitor Extensions
+    az k8s-extension create --name "azuremonitor-containers" \
+    --cluster-name $clusterName \
+    --resource-group $groupName \
+    --cluster-type connectedClusters \
+    --extension-type Microsoft.AzureMonitor.Containers
+
+    # Ensure you have Azure Defender Plan turned on in Azure Security Center before you create the Defender extension
+
+    az k8s-extension create --name "azure-defender" \
+    --cluster-name $clusterName \
+    --resource-group $groupName \
+    --cluster-type connectedClusters \
+    --extension-type Microsoft.AzureDefender.Kubernetes \
+    --configuration-settings logAnalyticsWorkspaceResourceID=$logAnalyticsWorkspaceId
+
+    # Test create an alert by creating a new pod
+    kubectl get pods --namespace=asc-alerttest-662jfi039n
 
 ## Deploy the App service Kubernetes Environment
 
