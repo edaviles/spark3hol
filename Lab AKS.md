@@ -285,7 +285,7 @@ Browse the custom location resource using the Azure portal and note the Arc-enab
     --extension-type Microsoft.AzureDefender.Kubernetes \
     --configuration-settings logAnalyticsWorkspaceResourceID=$logAnalyticsWorkspaceId
 
-    # Test create an alert by creating a new pod
+    # Test create an alert by creating a new pod. This usually takes upto 30 min to show up in the Security Center.
     kubectl get pods --namespace=asc-alerttest-662jfi039n
 
 ## Deploy the App service Kubernetes Environment
