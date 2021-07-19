@@ -274,7 +274,7 @@
                 },
                 "protectedSettings": {
                     "commandToExecute": "[concat('bash installCAPI.sh', ' ', parameters('adminUsername'), ' ', parameters('spnClientId'), ' ', parameters('spnClientSecret'), ' ', parameters('spnTenantId'), ' ', parameters('vmName'), ' ', parameters('azureLocation'), ' ', parameters('stagingStorageAccountName'))]",
-                    "fileUris": [ "https://raw.githubusercontent.com/Bapic/spark3hol/main/base_infra//artifacts/installCAPI.sh" ]
+                    "fileUris": [ "https://raw.githubusercontent.com/Bapic/spark3hol/main/base_infra/artifacts/installCAPI.sh" ]
                 }
             }
         }
