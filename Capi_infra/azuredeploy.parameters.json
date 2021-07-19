@@ -3,22 +3,22 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "sshRSAPublicKey": {
-            "value": "<your RSA public key>"
+            "value": ""
         },
         "spnClientId": {
-            "value": "<your service principal client id>"
+            "value": ""
         },
         "spnClientSecret": {
-            "value": "<your service principal secret>"
+            "value": ""
         },
         "spnTenantId": {
-            "value": "<your spn tenant id>"
+            "value": ""
         },
         "myIpAddress": {
-            "value": "<your IP address>"
+            "value": ""
         },
         "logAnalyticsWorkspaceName": {
-            "value": "<your unique Log Analytics workspace name>"
+            "value": ""
         }
     }
 }
