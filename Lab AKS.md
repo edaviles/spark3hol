@@ -52,7 +52,7 @@ To simplify the process to setup all tools and modules, we have automated the pr
 
 We suggest you run the below steps as well using the Admin VM created above so that all information are in the same place.
 
-**The best option is to use GitHub CodeSpaces. It includes all the tools and also a compatible version of AZ CLI. It is the best tool for this scenario. You can also run all the steps using codespaces from below.**
+**Another option is to use GitHub CodeSpaces. It includes all the tools and also a compatible version of AZ CLI. However, it is in beta and requires you to enroll first**
 
 4. SSH keys- login to Azure Cloud shell or to the admin created above and run the below command.
 The following ssh-keygen command generates 4096-bit SSH RSA public and private key files by default in the ~/.ssh directory. If an SSH key pair exists in the current location, those files are overwritten.
