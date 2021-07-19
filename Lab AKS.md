@@ -269,6 +269,7 @@ Browse the custom location resource using the Azure portal and note the Arc-enab
     --output tsv)
 
 ## Create the Azure Defender and Azure Monitor Extensions
+
     az k8s-extension create --name "azuremonitor-containers" \
     --cluster-name $clusterName \
     --resource-group $groupName \
