@@ -1,4 +1,4 @@
-# Deploy Cloud Native Apps - CAPZ K8s Cluster
+# Deploy Cloud Native Apps - CAPZ K8s Cluster (WIP)
 
 ## Introduction
 
@@ -215,48 +215,176 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
 1. **Set CLI** variables for easy usage and reference
 
+   ```bash
+   tenantId="<tenant_Id>"
+   subscriptionId="<subscription_Id>"
+   capzResourceGroup="capz-k8s-rg"
+   arcK8sResourceGroup="arc-capz-k8s-rg"
+   arcSvcResourceGroup="arc-capz-services-rg"
+   clusterName="capz-k8s-cluster"
+   acrName="capzacr"
+   baseFolderPath="<root_folder_path>/Deployments"
+   ```
+
 2. **Login** to Azure
 
+   ```bash
+   az login --tenant $tenantId
+   ```
+
 3. **Create** *Resource Groups* as described in the **Plan** section
+
+   ```bash
+   az group create -l eastus -n $capzResourceGroup
+   az group create -l eastus -n $arcK8sResourceGroup
+   az group create -l eastus -n $arcSvcResourceGroup
+   
+   ```
 
 4. **Deploy** Management Cluster for CAPZ
 
    - **Kind** would be used for this exercise as it is very easy to set up!
+
    - Any K8s cluster can be used management cluster for CAPZ
+
+     ```bash
+     # Create the management cluster locally
+     kind create cluster
+     
+     # Once created, check the cluster info of the Kind cluster
+     kubectl cluster-info --context kind-kind
+     ```
+
+     
 
 5. **Create** Service Principal for CAPZ cluster
 
    - **k8s-capz-sp** - Name of the service principal
 
+     ```bash
+     # Create service principal - k8s-capz-sp
+     az ad sp create-for-rbac --skip-assignment --name http://k8s-capz-sp
+     
+     # Service Principal details
+     {
+       "appId": "<appId>",
+       "displayName": "k8s-capz-sp",
+       "name": "http://k8s-capz-sp",
+       "password": "<password>",
+       "tenant": "<tenantId>"
+     }
+     
+     
+     ```
+
+     
+
 6. Set **ENV** variables used by CAPZ installation
+
+   ```bash
+   export AZURE_SUBSCRIPTION_ID="<subscriptionId>"
+   export AZURE_TENANT_ID="<tenantId>"
+   export AZURE_CLIENT_ID="<appId>"
+   export AZURE_CLIENT_SECRET="<apssword>"
+   export AZURE_ENVIRONMENT="AzurePublicCloud"
+   export AZURE_CONTROL_PLANE_MACHINE_TYPE="Standard_DS2_v2"
+   export AZURE_NODE_MACHINE_TYPE="Standard_D8s_v3"
+   export AZURE_LOCATION="eastus"
+   
+   export AZURE_SUBSCRIPTION_ID_B64="$(echo -n "$AZURE_SUBSCRIPTION_ID" | base64 | tr -d '\n')"
+   export AZURE_TENANT_ID_B64="$(echo -n "$AZURE_TENANT_ID" | base64 | tr -d '\n')"
+   export AZURE_CLIENT_ID_B64="$(echo -n "$AZURE_CLIENT_ID" | base64 | tr -d '\n')"
+   export AZURE_CLIENT_SECRET_B64="$(echo -n "$AZURE_CLIENT_SECRET" | base64 | tr -d '\n')"
+   ```
+
+   
 
 7. **Assign** *Role* for Service Principal
 
    - **Contributor** access to the Subscription
 
+     ```bash
+     # Create Role assignment - Contrubutor
+     az role assignment create --role=Contributor --assignee=$AZURE_CLIENT_ID --scope=/subscriptions/$AZURE_SUBSCRIPTION_ID
+     ```
+
+     
+
 8. **Initialize** the Azure Provider
+
+   ```bash
+   clusterctl init --infrastructure azure
+   ```
+
+   
 
 9. **Create** Configuration Template for *Workload Cluster*
 
    - Modify values as appropriate 
+
    - This exercise would create a cluster with 1 *Master* Node and 3 *Worker* Nodes
+
+     ```bash
+     # Modify values as appropriate 
+     clusterctl config cluster $clusterName --kubernetes-version v1.18.19 --control-plane-machine-count=1 --worker-machine-count=3 > capz-k8s-cluster.yaml
+     
+     # Apply cluster configuration file
+     kubectl apply -f capz-k8s-cluster.yaml
+     ```
+
+     
 
 10. **Deploy** *Workload Cluster*
 
-    - **Check** status Cluster creation
-    - **Create** VNET
-    - **Create** 2 SubNets - *Master, Worker*
-    - **Create** 1 *Master* VM, 3 *Worker* VMs
-    - **Create** appropriate NSGs
-    - **Create** Disks
-      - **OS Disks** - Master and Worker Nodes
-      - **ETCD Disks** - Master Node
+    - **Check** status of Cluster creation
+
+      ```bash
+      kubectl get cluster --all-namespaces
+      clusterctl describe cluster capz-k8s-cluster
+      kubectl get kubeadmcontrolplane --all-namespaces
+      kubectl get Machine -A
+      ```
+
+    - The CAPZ cluster creation would create following resources in the **$capzResourceGroup**
+
+      - **Create** VNET - ***capz-k8s-cluster-vnet***
+      - **Create** 2 SubNets
+        - *Master* - ***capz-master-subnet***
+        - *Worker* - ***capz-worker-subnet***
+      - **Create** 1 *Master* VM, 3 *Worker* VMs
+      - **Create** appropriate NSGs
+      - **Create** Disks
+        - **OS Disks** - Master and Worker Nodes
+        - **ETCD Disks** - Master Node
 
 11. Get **kubeconfig** for newly created CAPZ cluster
 
+    ```bash
+    clusterctl get kubeconfig $clusterName > capz-k8s-cluster.kubeconfig
+    alias k-capz="k --kubeconfig=$baseFolderPath/Setup/capz-k8s-cluster.kubeconfig"
+    alias helm-capz="helm --kubeconfig=$baseFolderPath/Setup/capz-k8s-cluster.kubeconfig"
+    ```
+
 12. **Deploy** **Calico** Network plugin
 
+    ```bash
+    # Network Plugin - Calico
+    k-capz apply -f https://raw.githubusercontent.com/kubernetes-sigs/cluster-api-provider-azure/master/templates/addons/calico.yaml
+    
+    # Get K8s cluster contexts
+    k-capz config get-contexts
+    
+    # Get K8s cluster nodes, pods to check the status of the newly created cluster
+    k-capz get no, po
+    ```
+
 13. **Set** *Azure Arc Extension* variables
+
+    ```
+    
+    ```
+
+    
 
 14. Add connectedk8s extension to Azure CLI
 
@@ -374,48 +502,6 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 - Get *EventGrid* **Key** details
 - Make an Http call using Curl being within the Pod; this would send an event to Event Grid topic
 - This in-turn calls the subscription endpoint; check if the PostMessageApp Function being called
-
-
-
-```bash
-tenantId="<tenant_Id>"
-subscriptionId="<subscription_Id>"
-capzResourceGroup="capz-workshop-rg"
-arcK8sResourceGroup="arc-k8s-rg"
-arcSvcResourceGroup="arc-services-rg"
-clusterName="capz-k8s-cluster"
-acrName="capzacr"
-baseFolderPath="<root_folder_path>/Deployments"
-```
-
-
-
-
-
-
-
-
-
-```bash
-az login --tenant $tenantId
-```
-
-
-
-
-
-
-
-```bash
-az group create -l eastus -n $capzResourceGroup
-az group create -l eastus -n $arcK8sResourceGroup
-az group create -l eastus -n $arcSvcResourceGroup
-
-```
-
-
-
-
 
 
 
