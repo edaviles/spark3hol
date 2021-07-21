@@ -216,14 +216,37 @@ Now for deploying Cloud Native Applications on to AKS - we would use *Azure Arc 
 1. **Set CLI** variables for easy usage and reference
 
    ```bash
-   tenantId="<tenant_Id>"
-   subscriptionId="<subscription_Id>"
-   aksResourceGroup="aks-k8s-rg"
-   arcK8sResourceGroup="arc-aks-k8s-rg"
-   arcSvcResourceGroup="arc-aks-services-rg"
-   clusterName="aks-k8s-cluster"
+   tenantId="<tenantID"
+   subscriptionId="<subscriptionId>"
+   arcResourceGroup="arc-workshop-rg"
+   aksResourceGroup="arc-aks-rg"
+   arcServicesResourceGroup="arc-services-rg"
    location="eastus"
-   baseFolderPath="<root_folder_path>/Deployments"
+   clusterName="arc-aks-cluster"
+   version=1.18.19
+   aksVnetName=arc-aks-vnet
+   aksVnetPrefix=17.0.0.0/23
+   aksVnetId=
+   aksSubnetName=arc-aks-subnet
+   aksSubnetPrefix=17.0.0.0/24
+   aksSubnetId=
+   sysNodeSize="Standard_DS3_v2"
+   sysNodeCount=3
+   maxSysPods=30
+   networkPlugin=azure
+   networkPolicy=azure
+   sysNodePoolName=arcsyspool
+   vmSetType=VirtualMachineScaleSets
+   addons=monitoring
+   aadAdminGroupID="<aadAdminGroupID>"
+   aadTenantID="<aadTenantID>"
+   extensionName="$clusterName-ext-appsvc"
+   extensionNamespace="$clusterName-appsvc-ns"
+   kubeEnvironmentName="$clusterName-appsvc-kube"
+   customLocationName="$clusterName-custom-location"
+   connectedClusterName="arc-workshop-aks"
+   spAppId="<appId>"
+   spPassword="<password>"
    ```
 
 2. **Login** to Azure
@@ -259,45 +282,53 @@ Now for deploying Cloud Native Applications on to AKS - we would use *Azure Arc 
      }
      ```
 
-5. **Assign** *Role* for Service Principal
-
-   - **Contributor** access to the Subscription
-
-     ```bash
-     # Create Role assignment - Contrubutor
-     az role assignment create --role=Contributor --assignee=$AZURE_CLIENT_ID --scope=/subscriptions/$AZURE_SUBSCRIPTION_ID
-     ```
-
-6. **Initialize** the Azure Provider
+5. **Create** VNET which hosts AKS Subnet
 
    ```bash
-   clusterctl init --infrastructure azure
+   az network vnet create -n $aksVnetName -g $aksResourceGroup --address-prefixes $aksVnetPrefix
+   aksVnetId=$(az network vnet show -n $aksVnetName -g $aksResourceGroup --query="id" -o tsv)
+   echo $aksVnetId
    ```
 
-7. **Create** Configuration Template for *Workload Cluster*
+6. **Create** Subnet which hosts AKS Cluster
 
-   - Modify values as appropriate 
+   ```bash
+   az network vnet subnet create -n $aksSubnetName --vnet-name $aksVnetName -g $aksResourceGroup --address-prefixes $aksSubnetPrefix
+   aksSubnetId=$(az network vnet subnet show -n $aksSubnetName --vnet-name $aksVnetName -g $aksResourceGroup --query="id" -o tsv)
+   echo $aksSubnetId
+   ```
 
-   - This exercise would create a cluster with 1 *Master* Node and 3 *Worker* Nodes
+7. **Assign** *Role* for Service Principal
 
-     ```bash
-     # Modify values as appropriate 
-     clusterctl config cluster $clusterName --kubernetes-version v1.18.19 --control-plane-machine-count=1 --worker-machine-count=3 > aks-k8s-cluster.yaml
-     
-     # Apply cluster configuration file
-     kubectl apply -f aks-k8s-cluster.yaml
-     ```
+   ```bash
+   # Create Role assignment - Network Contrubutor
+   az role assignment create --assignee $spAppId --role "Network Contributor" --scope $aksVnetId
+   
+   # Create Role assignment - Contrubutor
+   az role assignment create --role=Contributor --assignee=$AZURE_CLIENT_ID --scope=/subscriptions/$AZURE_SUBSCRIPTION_ID
+   
+   arcResourceGroupId=$(az group show -n $arcResourceGroup --query="id" -o tsv)
+   az role assignment create --assignee $spAppId --role "Monitoring Metrics Publisher" --scope $arcResourceGroupId
+   ```
 
 8. **Deploy** *Workload Cluster*
 
-   - **Check** status of Cluster creation
-
-     ```bash
-     kubectl get cluster --all-namespaces
-     clusterctl describe cluster aks-k8s-cluster
-     kubectl get kubeadmcontrolplane --all-namespaces
-     kubectl get Machine -A
-     ```
+   ```bash
+   az aks create --name $clusterName \
+   --resource-group $aksResourceGroup \
+   --kubernetes-version $version --location $location \
+   --vnet-subnet-id "$aksSubnetId" --enable-addons $addons \
+   --node-vm-size $sysNodeSize \
+   --node-count $sysNodeCount --max-pods $maxSysPods \
+   --service-principal $spAppId \
+   --client-secret $spPassword \
+   --network-plugin $networkPlugin --network-policy $networkPolicy \
+   --nodepool-name $sysNodePoolName --vm-set-type $vmSetType \
+   --generate-ssh-keys \
+   --enable-aad \
+   --aad-admin-group-object-ids $aadAdminGroupID \
+   --aad-tenant-id $aadTenantID
+   ```
 
 9. Get **kubeconfig** for newly created AKS cluster
 
@@ -316,8 +347,6 @@ Now for deploying Cloud Native Applications on to AKS - we would use *Azure Arc 
     appsvcExtensionNamespace="$clusterName-appsvc-ns"
     appsvcKubeEnvironmentName="$clusterName-appsvc-kube"
     ```
-
-    
 
 11. Add **connectedk8s** extension to Azure CLI
 
