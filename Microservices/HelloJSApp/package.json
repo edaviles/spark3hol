@@ -1,0 +1,22 @@
+{
+    "name": "hello_js_app",
+    "description": "Simple Hello World Node.js sample for Azure App Service",
+    "version": "1.1.6",
+    "private": true,
+    "license": "MIT",
+    "author": "Monojit Datta",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "preinstall": "mkdir -p logs",
+        "install": "npm install --unsafe-perm --save-dev mongodb body-parser express",
+        "start": "node server.js 1> logs/server.log 2>&1"
+    },
+    "engines": {
+        "node": ">=6.9.1"
+    },
+    "devDependencies": {
+        "body-parser": "^1.19.0",
+        "express": "^4.17.1",
+        "mongodb": "^3.6.10"
+    }
+}

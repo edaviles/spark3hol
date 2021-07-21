@@ -1,0 +1,33 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "HTTP": {
+                "type": "Http",
+                "inputs": {
+                    "method": "GET",
+                    "uri": "https://hello-js-app.arc-aks-cluster--g08255q.eastus.k4apps.io/"
+                },
+                "runAfter": {}
+            }
+        },
+        "triggers": {
+            "When_a_blob_is_Added_or_Modified_in_Azure_Storage": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "path": "arctestblob"
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "AzureBlob",
+                        "operationId": "whenABlobIsAddedOrModified",
+                        "serviceProviderId": "/serviceProviders/AzureBlob"
+                    }
+                }
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {}
+    },
+    "kind": "Stateful"
+}

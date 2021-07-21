@@ -1,0 +1,11 @@
+persistentVolume:
+  name: capz-arc-appsvc-pv
+  storageCapacity: 100Gi
+  storageClassName: default
+  accessModes:
+  - ReadWriteOnce
+  azureFile:
+    secretName: capz-k8s-fs-secret
+    secretNamespace: default
+    shareName: capz-k8s-fs
+    readOnly: false

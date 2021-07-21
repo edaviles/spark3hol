@@ -1,0 +1,44 @@
+Deploy Web App / API App onto App KE thru Arc
+==============================================
+
+tenantId="72f988bf-86f1-41af-91ab-2d7cd011db47"
+subscriptionId="6bdcc705-8db6-4029-953a-e749070e6db6"
+location="eastus"
+clusterName="arc-aks-cluster"
+arcResourceGroupName="arc-workshop-rg"
+customLocationName="$clusterName-custom-location"
+appsvcResourceGroup="arc-services-rg"
+functionappName="postmessageapp"
+functionappPlanName="$functionappName-plan"
+functionappInsightsName="$functionappName-insights"
+storageAccountName="arcappsstg"
+
+
+az extension add --upgrade --yes --name customlocation
+az extension remove --name appservice-kube
+az extension add --yes --source "https://aka.ms/appsvc/appservice_kube-latest-py2.py3-none-any.whl"
+
+customLocationId=$(az customlocation show \
+--resource-group $arcResourceGroupName \
+--name $customLocationName \
+--query id \
+--output tsv)
+echo $customLocationId
+
+FunctionApp
+=============    
+func init $functionappName --dotnet
+func new --name HttpExample --template "HTTP trigger" --authlevel "anonymous"
+
+az storage account create -n $storageAccountName -l $location -g $appsvcResourceGroup --sku Standard_LRS
+#az storage account delete -n $storageAccountName -g $appsvcResourceGroup --yes
+
+az monitor app-insights component create --app $functionappInsightsName -l $location -g $appsvcResourceGroup
+
+az functionapp create -g $appsvcResourceGroup -n $functionappName --custom-location $customLocationId \
+--storage-account $storageAccountName --functions-version 3 --runtime dotnet \
+--app-insights $functionappInsightsName
+
+#az functionapp delete -g $appsvcResourceGroup -n $functionappName
+
+func azure functionapp publish $functionappName
