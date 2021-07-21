@@ -222,7 +222,7 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
    arcK8sResourceGroup="arc-capz-k8s-rg"
    arcSvcResourceGroup="arc-capz-services-rg"
    clusterName="capz-k8s-cluster"
-   acrName="capzacr"
+   location="eastus"
    baseFolderPath="<root_folder_path>/Deployments"
    ```
 
@@ -380,19 +380,63 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
 13. **Set** *Azure Arc Extension* variables
 
-    ```
-    
+    ```bash
+    connectedClusterName="arc-capz-k8s"
+    customLocationName="$clusterName-custom-location"
+    appsvcExtensionName="$clusterName-ext-appsvc"
+    appsvcExtensionNamespace="$clusterName-appsvc-ns"
+    kubeEnvironmentName="$clusterName-appsvc-kube"
     ```
 
-    
+14. Add **connectedk8s** extension to Azure CLI
 
-14. Add connectedk8s extension to Azure CLI
+    ```bash
+    az extension add --upgrade --yes --name connectedk8s
+    az extension add --upgrade --yes --name k8s-extension
+    az extension add --upgrade --yes --name customlocation
+    
+    az extension remove --name appservice-kube
+    az extension add --yes --source "https://aka.ms/appsvc/appservice_kube-latest-py2.py3-none-any.whl"
+    az extension show  -n appservice-kube -o table
+    ```
 
 15. **Register** *Providers* as required by *Azure Arc for K8s*
 
-16. **Connect** CAPZ cluster with Azure Arc 
+    ```bash
+    # Register required Providers
+    az provider register --namespace Microsoft.Kubernetes
+    az provider register --namespace Microsoft.KubernetesConfiguration
+    az provider register --namespace Microsoft.ExtendedLocation
+    az provider register --namespace Microsoft.Web
+    
+    # Check Registration status of required Providers
+    az provider show -n Microsoft.Kubernetes -o table
+    az provider show -n Microsoft.KubernetesConfiguration -o table
+    az provider show -n Microsoft.ExtendedLocation -o table
+    az provider show -n Microsoft.Web -o table
+    ```
+
+16. **Connect** CAPZ cluster with Azure Arc
+
+    ```bash
+    # Get K8s cluster contexts
+    k-capz config get-contexts
+    
+    # Connect K8s cluster with Azure Arc
+    az connectedk8s connect -g $arcResourceGroupName -n $connectedClusterName \
+    --kube-config $baseFolderPath/Setup/capz-k8s-cluster.kubeconfig \
+    --kube-context capz-k8s-cluster-admin@capz-k8s-cluster
+    ```
 
 17. **Check** successfule connectivity with Azure Arc
+
+    ```bash
+    # List Connected clusters
+    az connectedk8s list --resource-group $arcResourceGroupName --output table
+    
+    # Check Deployments, Pods for the Arc connected cluster
+    k-capz get deployments,pods -n azure-arc
+    ```
 
 18. **Create** a Public IP
 
