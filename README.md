@@ -25,7 +25,7 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 - Deep dive on K8s
 - Deep dive on Azure Arc
 
-
+## <u>Architecture Diagram - ARC - OverAll - TBD</u>
 
 ### Repository Structure
 
@@ -213,6 +213,10 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
 #### Working Resources
 
+## <u>Architecture Diagram - CAPZ - TBD</u>
+
+## <u>Architecture Diagram - ARC Agent - TBD</u>
+
 1. **Set CLI** variables for easy usage and reference
 
    ```bash
@@ -273,11 +277,7 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
        "password": "<password>",
        "tenant": "<tenantId>"
      }
-     
-     
      ```
-
-     
 
 6. Set **ENV** variables used by CAPZ installation
 
@@ -297,8 +297,6 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
    export AZURE_CLIENT_SECRET_B64="$(echo -n "$AZURE_CLIENT_SECRET" | base64 | tr -d '\n')"
    ```
 
-   
-
 7. **Assign** *Role* for Service Principal
 
    - **Contributor** access to the Subscription
@@ -308,15 +306,11 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
      az role assignment create --role=Contributor --assignee=$AZURE_CLIENT_ID --scope=/subscriptions/$AZURE_SUBSCRIPTION_ID
      ```
 
-     
-
 8. **Initialize** the Azure Provider
 
    ```bash
    clusterctl init --infrastructure azure
    ```
-
-   
 
 9. **Create** Configuration Template for *Workload Cluster*
 
@@ -331,8 +325,6 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
      # Apply cluster configuration file
      kubectl apply -f capz-k8s-cluster.yaml
      ```
-
-     
 
 10. **Deploy** *Workload Cluster*
 
@@ -385,7 +377,7 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
     customLocationName="$clusterName-custom-location"
     appsvcExtensionName="$clusterName-ext-appsvc"
     appsvcExtensionNamespace="$clusterName-appsvc-ns"
-    kubeEnvironmentName="$clusterName-appsvc-kube"
+    appsvcKubeEnvironmentName="$clusterName-appsvc-kube"
     ```
 
 14. Add **connectedk8s** extension to Azure CLI
@@ -428,7 +420,7 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
     --kube-context capz-k8s-cluster-admin@capz-k8s-cluster
     ```
 
-17. **Check** successfule connectivity with Azure Arc
+17. **Check** successful connectivity with Azure Arc
 
     ```bash
     # List Connected clusters
@@ -441,48 +433,162 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 18. **Create** a Public IP
 
     - Used by App Service Extension to create ELB service on CAPZ cluster
+
     - The Public Service is used by Application Services on Azure to communicate with the corrsponding Pods in the cluster
+
+      ```bash
+      # Create Public IP
+      az network public-ip create -g $capzResourceGroup -n $clusterName-ext-appsvc-pip --sku STANDARD
+      
+      # Static Public IP
+      staticIp=$(az network public-ip show -g $capzResourceGroup -n $clusterName-ext-appsvc-pip --output tsv --query ipAddress)
+      ```
 
 19. **Deploy** a *PersistentVolume* using Helm chart
 
+    - Create a Storage Account on Azure. This is to be used as Persistent Storage for the K8s Cluster. Add one Azure FileShare with a size of 150Gi+
+
     - For this exercise, the PV is mapped to an *Azure FIle* storage account. Based on the K8s creation process, one can choose to handle this step in a different way - e.g. using Azure Disk as the mapped storage Or create and appropriate Storage class.
 
-      This step is simple in a managed cluster scenario where in-built Storage classes are available as part of the cluster creation process
+      *<u>This step is simple in a managed cluster scenario where in-built Storage classes are available as part of the cluster creation process</u>*
 
     - Used by *Application Services* Extension Pods, to be created later
+
     - The Pods would have a PVC with a request of 100Gi memory requirement
+
     - This PV would be Bound with the PVC and allow the Pod(s) to be created successfully
+
+      ```bash
+      k-capz create secret generic capz-k8s-fs-secret -n $appsvcExtensionNamespace --from-literal=azurestorageaccountname=<storage_account_name> --from-literal=azurestorageaccountkey=<storage_account_key>
+      
+      helm-capz install pv-arc-chart -n default $baseFolderPath/Helms/pv-chart/ -f $baseFolderPath/Helms/pv-chart/values-fs.yaml
+      
+      helm-capz upgrade pv-arc-chart -n default $baseFolderPath/Helms/pv-chart/ -f $baseFolderPath/Helms/pv-chart/values-fs.yaml
+      
+      # if you want to Uninstall the chart
+      #helm-capz uninstall pv-arc-chart -n default
+      ```
 
 20. **Deploy** *App Service* Extension on the CAPZ cluster
 
+    ```bash
+    az k8s-extension create \
+    --resource-group $arcResourceGroupName \
+    --name $appsvcExtensionName \
+    --cluster-type connectedClusters \
+    --cluster-name $connectedClusterName \
+    --extension-type 'Microsoft.Web.Appservice' \
+    --release-train stable \
+    --auto-upgrade-minor-version true \
+    --scope cluster \
+    --release-namespace $appsvcExtensionNamespace \
+    --configuration-settings "Microsoft.CustomLocation.ServiceAccount=default" \
+    --configuration-settings "appsNamespace=${appsvcExtensionNamespace}" \
+    --configuration-settings "clusterName=${appsvcKubeEnvironmentName}" \
+    --configuration-settings "loadBalancerIp=${staticIp}" \
+    --configuration-settings "keda.enabled=true" \
+    --configuration-settings "buildService.storageClassName=default" \
+    --configuration-settings "buildService.storageAccessMode=ReadWriteOnce" \
+    --configuration-settings "customConfigMap=${appsvcExtensionNamespace}/kube-environment-config" \
+    --configuration-settings "envoy.annotations.service.beta.kubernetes.io/azure-load-balancer-resource-group=${capzResourceGroup}"
+    ```
+
 21. **Check** the status of the *App Service* Extension creation
 
+    ```bash
+    az k8s-extension show -c $connectedClusterName --cluster-type connectedClusters   -n $appsvcExtensionName -g $arcResourceGroupName
+    ```
+
+    ## <u>Architecture Diagram - CAPZ - App SVC Extension - TBD</u>
+
 22. **Retrieve** the *ExtensionId* to be used in subsequent steps
+
+    ```bash
+    extensionId=$(az k8s-extension show \
+      --cluster-type connectedClusters \
+      --cluster-name $connectedClusterName \
+      --resource-group $arcResourceGroupName \
+      --name $appsvcExtensionName \
+      --query id \
+      --output tsv)
+    echo $extensionId
+    
+    # Check Pods created in teh extensionNamespace
+    k-capz get po -n $appsvcExtensionNamespace
+    ```
 
 23. **Create** *CustomLocation* with Azure Arc Connected Cluster
 
     - Every *Application Services* or *Data Services* would be deployed in the *CustomLocation* rather than an Azure Region/Location
+
     - This would ensure various types of application and data services can run together in same Arc Enabled Cluster
 
-24. Check the status of CustomLocation creation process
+      ```bash
+      connectedClusterId=$(az connectedk8s show --resource-group $arcResourceGroupName --name $connectedClusterName --query id --output tsv)
+      echo $connectedClusterId
+      
+      az customlocation create \
+      --resource-group $arcResourceGroupName \
+      --name $customLocationName \
+      --host-resource-id $connectedClusterId \
+      --namespace $appsvcExtensionNamespace \
+      --cluster-extension-ids $extensionId
+      ```
+
+      ## <u>Architecture Diagram - CAPZ - Custom Location - TBD</u>
+
+24. **Check** the status of CustomLocation creation process
+
+    ```bash
+    az customlocation show --resource-group $arcResourceGroupName --name $customLocationName
+    ```
 
 25. **Retrieve** the *CustomLocationId* to be used in subsequent steps
+
+    ```bash
+    customLocationId=$(az customlocation show \
+    --resource-group $arcResourceGroupName \
+    --name $customLocationName \
+    --query id \
+    --output tsv)
+    echo $customLocationId 
+    ```
 
 26. **Create** *App Service Kube Environment* for the above *CustomLocation*
 
     - This is a collection of all *App Service Plans* and *App Services*
+
     - Please note that this is only needed for Application Services; for Data Services thsi would be performed by Data Controllers for Arc
 
-27. Let us now delve into creating Application Services onto Azure and then deploying onto CAPZ cluster
+      ```bash
+      az appservice kube create \
+      --resource-group $arcResourceGroupName \
+      --name $appsvcKubeEnvironmentName \
+      --custom-location $customLocationId \
+      --static-ip $staticIp
+      ```
 
-    
+27. Check Kueb Environment creation process
+
+    ```bash
+    az appservice kube show \
+    --resource-group $arcResourceGroupName \
+    --name $appsvcKubeEnvironmentName
+    ```
+
+28. Let us now delve into creating Application Services onto Azure and then deploying onto CAPZ cluster
+
+
+
+## <u>Architecture Diagram - CAPZ - AppFlow - TBD</u>
+
+
 
 #### App Services
 
 - This execise uses a simple API App in NodeJS - **HelloJSApp** for this purpose. One can use any App Service or Web API for this purpose
 - Visual Studio Code or Visual Studio both have easy integration with Azure Resource management. Any other IDE with appropriate plugins can be used as well. This exercise would use VSCode as an option
 - Open App Service root folder in Visual Studio Code
-- Set local varibales in Azure CLI
 - Right Click and **Deploy** to API App. Please note one can create the Web App/API App in the portal and then manage deployment from VSCode
 - VSCode would ask for a new App to be Created Or Deploy on an existing one
 - The Target Location step is extremely important - ***should be the <u>CustomLocation</u> created in earlier steps***
@@ -491,14 +597,11 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 - Go to Azure Portal and Check the App Service resource; in the Overview blade it will show up the Web API access URL
 - Check the URL in te browser; use Postman or any REST client to call to test different paths of the API App
 
-
-
 #### Function App
 
 - This execise uses a simple *Http Triggerred* Azure Function in .NetCore - **PostMessageApp** for this purpose. One can use any type of Azure Function of their choice
 - Visual Studio Code or Visual Studio both have easy integration with Azure Resource management. Any other IDE with appropriate plugins can be used as well. This exercise would use VSCode as an option
 - Open Function App  root folder in Visual Studio Code
-- Set local varibales in Azure CLI
 - Right Click and **Deploy** to Function App. Please note one can create the Function App in the portal and then manage deployment from VSCode
 - VSCode would ask for a new App to be Created Or Deploy on an existing one
 - The Target Location step is extremely important - ***should be the <u>CustomLocation</u> created in earlier steps***
@@ -519,7 +622,6 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
   - This exercise uses a simple *Blob trigger* for demonstration
 - Visual Studio Code or Visual Studio both have easy integration with Azure Resource management. Any other IDE with appropriate plugins can be used as well. This exercise would use VSCode as an option
 - Open Logic  App  root folder in Visual Studio Code
-- Set local variables in Azure CLI
 - Right Click and **Deploy** to Logic App
 - VSCode would ask for a new App to be Created Or Deploy on an existing one
 - The Target Location step is extremely important - ***should be the <u>CustomLocation</u> created in earlier steps***
@@ -532,20 +634,112 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
 #### Event Grid
 
-- This execise uses a simple *Event Grid Topic* - **PostTopic** for this purpose
-- Visual Studio Code or Visual Studio both DONOT have integration with Azure Arc flabvour for EventGrid as of now. So, creating the Topic in portal is the only option as of now
+- This exercise uses a simple *Event Grid Topic* - **PostTopic** for this purpose
+
 - Set local varibales in Azure CLI
+
+  ```bash
+  evgExtensionName="$clusterName-ext-eg"
+  evgExtensionNamespace="$clusterName-evg-ns"
+  evgTopicName="$clusterName-egt"
+  evgSubscriptionName="$clusterName-evg-sub"
+  ```
+
+- **Deploy** a *PersistentVolume* using Helm chart
+
+  - The Storage Account created in earlier step while preparing for App Services can be used here as well as Persistent Storage for the K8s Cluster
+
+  - Used by *Application Services* Extension Pods, to be created later
+  - The Pods would have a PVC with a request of 100Gi memory requirement
+  - This PV would be Bound with the PVC and allow the Pod(s) to be created successfully
+
+  ```bash
+  helm-capz install pv-arc-eg-chart -n default $baseFolderPath/Helms/pv-chart/ -f $baseFolderPath/Helms/pv-chart/values-eg.yaml
+  helm-capz upgrade pv-arc-eg-chart -n default $baseFolderPath/Helms/pv-chart/ -f $baseFolderPath/Helms/pv-chart/values-eg.yaml
+  
+  # if you want to Uninstall the chart
+  #helm-capz uninstall pv-arc-eg-chart -n defaul
+  ```
+
+- **Create** *Event Grid* extension for Azure Arc on K8s
+
+  This step is easy to be done through portal as there are many config options - https://docs.microsoft.com/en-us/azure/event-grid/kubernetes/install-k8s-extension
+
+- Check the event Grid extension creation process
+
+  ```bash
+  az k8s-extension show -c $connectedClusterName --cluster-type connectedClusters \
+  -n $evgExtensionName -g $arcResourceGroupName
+  ```
+
+- Visual Studio Code or Visual Studio both DONOT have integration with Azure Arc flavour for EventGrid as of now. So, creating the Topic in portal is the only option as of now 
+
 - The Target Location step is extremely important - ***should be the <u>CustomLocation</u> created in earlier steps***
-- Once the steps are completed, comeback to Azure CLI
+
+- **Check** *Topic* details
+
+  ```bash
+  topicId=$(az eventgrid topic show --name $topicName --resource-group $arcServicesResourceGroup --query id -o tsv)
+  echo $topicId
+  ```
+
+- Create *Event Subscription* for the above topic
+
+  ```bash
+  az eventgrid event-subscription create --name $eventSubName --source-resource-id $topicId \
+  --endpoint <event_subscription_endpoint>
+  
+   # e.g. function app endpoint that we had created earlier
+  ```
+
 - Check *Deployments* and/or *Pods* of the EventGrid Namespace in the K8s cluster. All Pods should be in the running state
-- Go to Azure Portal and Select the Topic
-- Create an EventGrid subscription for the Topic. You can choose any valid endpoints - this example uses PostMessage functiojn app created above as the subsxription endpoint
-- Create a sample app with K8s Cluster - say Nginx Server app
+
+  ```bash
+  k-capz get po -n $eventGridnamespace
+  ```
+
+- Create a sample app with K8s Cluster - say *Nginx Server* app
+
 - Get inside the **Nginx** Pod
+
 - Get *EventGrid* **Endpoint** details
+
+  ```bash
+  eventGridEndpoint=$(az eventgrid topic show --name $topicName -g $arcServicesResourceGroup --query "endpoint" --output tsv)
+  ```
+
 - Get *EventGrid* **Key** details
+
+  ```bash
+  eventGridKey=$(az eventgrid topic key list --name $topicName -g $arcServicesResourceGroup --query "key1" --output tsv)
+  ```
+
 - Make an Http call using Curl being within the Pod; this would send an event to Event Grid topic
+
+  ```bash
+  curl -kv -X POST -H "Content-Type: application/cloudevents-batch+json" -H "aeg-sas-key: $eventGridKey" \
+  -g $eventGridEndpoint \
+  -d  '[{ 
+        "specversion": "1.0",
+        "type" : "orderCreated",
+        "source": "myCompanyName/us/webCommerceChannel/myOnlineCommerceSiteBrandName",
+        "id" : "eventId-n",
+        "time" : "2020-12-25T20:54:07+00:00",
+        "subject" : "account/acct-123224/order/o-123456",
+        "dataSchema" : "1.0",
+        "data" : {
+           "orderId" : "123892",
+           "orderType" : "PO",
+           "reference" : "https://www.myCompanyName.com/orders/123"
+        }
+  }]'
+  ```
+
+  
+
 - This in-turn calls the subscription endpoint; check if the PostMessageApp Function being called
+
+  
 
 
 
