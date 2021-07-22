@@ -53,7 +53,7 @@ To simplify the process to setup all tools and modules, we have automated the pr
 
 We suggest you run the below steps as well using the Admin VM created above so that all information are in the same place.
 
-**Another option is to use GitHub CodeSpaces. It includes all the tools and also a compatible version of AZ CLI. However, it is in beta and requires you to enroll first**
+**Another option is to use GitHub CodeSpaces. It includes all the tools and also a compatible version of AZ CLI. However, it is in beta and requires you to enroll first.**
 
 4. SSH keys- login to Azure Cloud shell or to the admin created above and run the below command.
 The following ssh-keygen command generates 4096-bit SSH RSA public and private key files by default in the ~/.ssh directory. If an SSH key pair exists in the current location, those files are overwritten.
@@ -169,15 +169,13 @@ There are series of activities that we will perform. Here is a simple representa
 
 ## Create a Log Analytics workspace
 
-    # Once the workspace is created note the workspaceID and workspace key in an encoded format to be used with App service extension creation 
-
     $workspaceName="$groupName-workspace" 
     
     # workspaceName="$groupName-workspace" 
     # Name of the Log Analytics workspace
 
     az monitor log-analytics workspace create --resource-group $groupName --workspace-name $workspaceName --location $resourceLocation
-   
+    
     # az monitor log-analytics workspace create \
         --resource-group $groupName \
         --workspace-name $workspaceName \
@@ -185,40 +183,34 @@ There are series of activities that we will perform. Here is a simple representa
 
     az monitor log-analytics workspace get-shared-keys --resource-group $groupName --workspace-name $workspaceName
 
-Copy the output - at least customerID and workspaceid ("customerId": "< in the json output >", "id": "/subscriptions/< subscription id >/resourcegroups/onconnectedres/providers/microsoft.operationalinsights/workspaces/onconnectedres-workspace")
-
     $logAnalyticsWorkspaceId="$(az monitor log-analytics workspace show --resource-group $groupName --workspace-name $workspaceName --query customerId --output tsv)"
    
     $wsId="$(az monitor log-analytics workspace show --resource-group $groupName --workspace-name $workspaceName --query id --output tsv)"
-    
+
+Once the workspace is created, note the CustomerID, WorkspaceID and Workspace key in an encoded format to be used with App service extension creation. The customerID and workspaceid ("customerId": "< in the json output >"; "id": "/subscriptions/< subscription id >/resourcegroups/onconnectedres/providers/microsoft.operationalinsights/workspaces/onconnectedres-workspace")
+
+**NOTE:** The encoded format and the relevant steps are tested for Bash version only. Hence, for Powershell - we will not be using the Log Analytics Integration with App services at this time.
+
+    // --- DO NOT USE FROM HERE 
+
     # logAnalyticsWorkspaceId=$(az monitor log-analytics workspace show \
         --resource-group $groupName \
         --workspace-name $workspaceName \
         --query customerId \
         --output tsv)
    
-    $logAnalyticsWorkspaceIdEnc="$(printf %s $logAnalyticsWorkspaceId | base64)"
+    # logAnalyticsWorkspaceIdEnc="$(printf %s $logAnalyticsWorkspaceId | base64)"
    
-    # logAnalyticsWorkspaceIdEnc=$(printf %s $logAnalyticsWorkspaceId | base64)
-    # Needed for the next step
-
-    $logAnalyticsKey="$(az monitor log-analytics workspace get-shared-keys --resource-group $groupName --workspace-name $workspaceName --query primarySharedKey --output tsv)"
-   
-    #logAnalyticsKey=$(az monitor log-analytics workspace get-shared-keys \
+    # logAnalyticsKey=$(az monitor log-analytics workspace get-shared-keys \
         --resource-group $groupName \
         --workspace-name $workspaceName \
         --query primarySharedKey \
         --output tsv)
 
-    // need to change // $logAnalyticsKeyEncWithSpace="$(printf %s $logAnalyticsKey | base64)"
-   
     # logAnalyticsKeyEncWithSpace=$(printf %s $logAnalyticsKey | base64)
-
-    // need to change // $logAnalyticsKeyEnc=$(echo -n "${logAnalyticsKeyEncWithSpace//[[:space:]]/}")
-    
     # logAnalyticsKeyEnc=$(echo -n "${logAnalyticsKeyEncWithSpace//[[:space:]]/}")
-    # Needed for the next step
-   
+
+    // --- DO NOT USE TILL HERE 
 
 ## Create the App Service Extension and capture the extension ID
 
@@ -264,7 +256,8 @@ Copy the output - at least customerID and workspaceid ("customerId": "< in the j
 
 
     kubectl get svc,pods,deployments -n $namespace 
-        # Observe the various pods and services being created such as log processor, build service and image cache.
+    
+    # Observe the various pods and services being created such as log processor, build service and image cache.
 
     $extensionId="$(az k8s-extension show --cluster-type connectedClusters --cluster-name $clusterName --resource-group $groupName --name $extensionName --query id --output tsv)"
    
@@ -280,7 +273,7 @@ Copy the output - at least customerID and workspaceid ("customerId": "< in the j
 
     kubectl get pods -n $namespace
 
-## Create a Custom location and map it to the cluster and the extension. **You can create a customer location using the Azure portal also. Let us us that.**
+## Create a Custom location and map it to the cluster and the extension. **You can create a custom location using the Azure portal also. Let us use that.**
 
     $customLocationName="$namespace"
    
@@ -301,27 +294,32 @@ Copy the output - at least customerID and workspaceid ("customerId": "< in the j
         --namespace $namespace \
         --cluster-extension-ids $extensionId
 
-Browse the custom location resource using the Azure portal and note the Arc-enabled services
-      
-   az customlocation show --resource-group $groupName --name $customLocationName 
+**Browse the custom location resource using the Azure portal and note the Arc-enabled services.**
+
+    # You can also use the below to view the custom locations.
+    az customlocation show --resource-group $groupName --name $customLocationName 
    
-   # az customlocation show \
+    # az customlocation show \
     --resource-group $groupName \
     --name $customLocationName
 
-   $customLocationId="$(az customlocation show --resource-group $groupName --name $customLocationName --query id --output tsv)"
+    $customLocationId="$(az customlocation show --resource-group $groupName --name $customLocationName --query id --output tsv)"
    
-   # customLocationId=$(az customlocation show \
+    # customLocationId=$(az customlocation show \
     --resource-group $groupName \
     --name $customLocationName \
     --query id \
     --output tsv)
 
-## Create the Azure Defender and Azure Monitor Extensions. **Here let us use the Azure portal to onboard to Insights. We will skip the defender for now since it also requires you to have defender turned on in your subscription.**. More details here: https://docs.microsoft.com/en-us/azure/security-center/defender-for-kubernetes-azure-arc 
+## Create the Azure Defender and Azure Monitor Extensions. 
+**Here let us use the Azure portal to onboard to Insights. We will skip the defender for now since it also requires you to have defender turned on in your subscription.** Commands are given below for references purposes only.
+More details here: https://docs.microsoft.com/en-us/azure/security-center/defender-for-kubernetes-azure-arc 
 
-   az k8s-extension create --name "azuremonitor-containers" --cluster-name $clusterName --resource-group $groupName --cluster-type connectedClusters --extension-type Microsoft.AzureMonitor.Containers --configuration-settings logAnalyticsWorkspaceResourceID=$wsId
+    // --- DO NOT USE FROM HERE
+
+    az k8s-extension create --name "azuremonitor-containers" --cluster-name $clusterName --resource-group $groupName --cluster-type connectedClusters --extension-type Microsoft.AzureMonitor.Containers --configuration-settings logAnalyticsWorkspaceResourceID=$wsId
    
-   # az k8s-extension create --name "azuremonitor-containers" \
+    # az k8s-extension create --name "azuremonitor-containers" \
     --cluster-name $clusterName \
     --resource-group $groupName \
     --cluster-type connectedClusters \
@@ -342,6 +340,8 @@ Browse the custom location resource using the Azure portal and note the Arc-enab
     # Test create an alert by creating a new pod. This usually takes upto 30 min to show up in the Security Center.
     kubectl get pods --namespace=asc-alerttest-662jfi039n
 
+    // --- DO NOT USE TILL HERE 
+
 ## Deploy the App service Kubernetes Environment
 
     az appservice kube create --resource-group $groupName --location $resourceLocation --name $kubeEnvironmentName --custom-location $customLocationId --static-ip $staticIp
@@ -353,15 +353,19 @@ Browse the custom location resource using the Azure portal and note the Arc-enab
     --custom-location $customLocationId \
     --static-ip $staticIp
 
-   az appservice kube show --resource-group $groupName --name $kubeEnvironmentName
+    az appservice kube show --resource-group $groupName --name $kubeEnvironmentName
    
-   # az appservice kube show \
+    # az appservice kube show \
     --resource-group $groupName \
     --name $kubeEnvironmentName
 
     kubectl get pods -n $namespace
 
-## Deploy an App service Plan
+## Deploy two webApps and App Service Plan
+
+You can use the portal instead of the command lines. The new portal experience is better. It also creates a default App Services Plan along with the WebApp.
+
+    // --- DO NOT USE FROM HERE 
 
     $appPlanName="Appplan-001"
     $webAppName="WebApp-$appPlanName"
@@ -375,15 +379,19 @@ Browse the custom location resource using the Azure portal and note the Arc-enab
     --custom-location $customLocationId \
     --per-site-scaling --is-linux --sku K1
 
+    // --- DO NOT USE TILL HERE 
+
     kubectl get pods -n $namespace
 
-## Create two Web Applications
+**Create two Web Applications. .Net Core and Nodejs.**
 
-    az webapp create --resource-group $groupName --plan $appPlanName --name $webAppName --runtime "DOTNETCORE|3.1"
+The below command lines are for reference purposes. You can use the portal instead.
+
+    # az webapp create --resource-group $groupName --plan $appPlanName --name $webAppName --runtime "DOTNETCORE|3.1"
     
     # You now should now be able to browse the webApp home page following the webApp URL. Now create another WebApp with Node runtime.
 
-    az webapp create --plan $appPlanName --resource-group $groupName --name sampleApp --custom-location $customLocationId --runtime 'NODE|12-lts'
+    # az webapp create --plan $appPlanName --resource-group $groupName --name sampleApp --custom-location $customLocationId --runtime 'NODE|12-lts'
    
     # az webapp create \
     --plan $appPlanName \
@@ -392,11 +400,11 @@ Browse the custom location resource using the Azure portal and note the Arc-enab
     --custom-location $customLocationId \
     --runtime 'NODE|12-lts'
 
-## Deploy a sample Nodejs 'Hello world' app using https://github.com/Azure-Samples/nodejs-docs-hello-world
-   
+> Deploy a sample Nodejs 'Hello world' app using https://github.com/Azure-Samples/nodejs-docs-hello-world
+
     kubectl get pods -n $namespace
 
-## Deploy an ASP.Net appliction using Azure App Service 'Deployment Center' to todo app 
+> Deploy an ASP.Net appliction using Azure App Service 'Deployment Center' to todo app 
 
 - Fork the repo to your github account https://github.com/azure-samples/dotnetcore-sqldb-tutorial
 - Copy the name of your repo for "dotnetcore-sqldb-tutorial' app
@@ -408,8 +416,8 @@ You can create it manually or using the below command. **We will create it using
     az webapp config connection-string set --resource-group $groupName --name $webAppName --settings MyDbConnection="  
     Data Source=tcp:<SQL MI Public IP>,<port>;Initial Catalog=<dbname>;User Id=<username>;Password=<password>;" --connection-string-type SQLAzure
 
-   -------------------------------------------------------------------------------------------------------------
-   
+   --------------------------------------------------------------------------------------
+
 ## Create the Data Services Extension
 
     az k8s-extension create --name arc-data-services --extension-type microsoft.arcdataservices --cluster-type connectedClusters --cluster-name $clusterName --resource-group $groupName --auto-upgrade false --scope cluster --release-namespace $namespace --config Microsoft.CustomLocation.ServiceAccount=sa-bootstrapper
