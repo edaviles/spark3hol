@@ -7,7 +7,7 @@
                 "type": "ServiceProvider",
                 "inputs": {
                     "parameters": {
-                        "path": "postmessageblob"
+                        "path": "arccapzsvcsblob"
                     },
                     "serviceProviderConfiguration": {
                         "connectionName": "AzureBlob",

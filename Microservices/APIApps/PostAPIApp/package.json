@@ -1,5 +1,5 @@
 {
-    "name": "hello_js_app",
+    "name": "postapiapp",
     "description": "Simple Hello World Node.js sample for Azure App Service",
     "version": "1.1.6",
     "private": true,
@@ -8,7 +8,7 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "preinstall": "mkdir -p logs",
-        "install": "npm install --unsafe-perm --save-dev mongodb body-parser express",
+        "install": "npm install --unsafe-perm --save-dev body-parser express",
         "start": "node server.js 1> logs/server.log 2>&1"
     },
     "engines": {

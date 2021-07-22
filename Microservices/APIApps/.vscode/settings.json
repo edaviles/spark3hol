@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/6bdcc705-8db6-4029-953a-e749070e6db6/resourceGroups/arc-capz-services-rg/providers/Microsoft.Web/sites/postapiapp",
+    "appService.deploySubpath": "PostAPIApp"
+}

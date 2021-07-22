@@ -7,7 +7,7 @@
       "serviceProvider": {
         "id": "/serviceProviders/AzureBlob"
       },
-      "displayName": "pos-blob-conn"
+      "displayName": "arc-capz-blb-conn"
     }
   },
   "managedApiConnections": {}
