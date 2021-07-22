@@ -241,7 +241,7 @@ Copy the output - at least customerID and workspaceid ("customerId": "< in the j
 
     kubectl get pods -n $namespace
 
-## Create a Custom location and map it to the cluster and the extension
+## Create a Custom location and map it to the cluster and the extension. **You can create a customer location using the Azure portal also. Let us us that.**
 
     customLocationName=$namespace 
     # Name of the custom location
@@ -268,13 +268,14 @@ Browse the custom location resource using the Azure portal and note the Arc-enab
     --query id \
     --output tsv)
 
-## Create the Azure Defender and Azure Monitor Extensions
+## Create the Azure Defender and Azure Monitor Extensions. **Here let us use the Azure portal to onboard to Insights. We will skip the defender for now since it also requires you to have defender turned on in your subscription.**. More details here: https://docs.microsoft.com/en-us/azure/security-center/defender-for-kubernetes-azure-arc 
 
     az k8s-extension create --name "azuremonitor-containers" \
     --cluster-name $clusterName \
     --resource-group $groupName \
     --cluster-type connectedClusters \
     --extension-type Microsoft.AzureMonitor.Containers
+    --configuration-settings logAnalyticsWorkspaceResourceID=<Your LA WorkspaceID>
 
     # Ensure you have Azure Defender Plan turned on in Azure Security Center before you create the Defender extension
 
@@ -283,7 +284,7 @@ Browse the custom location resource using the Azure portal and note the Arc-enab
     --resource-group $groupName \
     --cluster-type connectedClusters \
     --extension-type Microsoft.AzureDefender.Kubernetes \
-    --configuration-settings logAnalyticsWorkspaceResourceID=$logAnalyticsWorkspaceId
+    --configuration-settings logAnalyticsWorkspaceResourceID=<Your LA WorkspaceID>
 
     # Test create an alert by creating a new pod. This usually takes upto 30 min to show up in the Security Center.
     kubectl get pods --namespace=asc-alerttest-662jfi039n
