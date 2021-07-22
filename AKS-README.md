@@ -27,7 +27,7 @@ Now for deploying Cloud Native Applications on to AKS - we would use *Azure Arc 
 - Deep dive on K8s or AKS
 - Deep dive on overall Azure Arc
 
-## <u>Architecture Diagram - ARC - OverAll - TBD</u>
+![agent-connect](./Assets/agent-connect.png)
 
 ### Repository Structure
 
