@@ -1,7 +1,8 @@
 
-    * NOTE: This repo is under construction and will be having a more updated complete version in near future with more scenarios to test and work with.*
+> NOTE: This repo is under construction and will be having a more updated complete version in near future with more scenarios to test and work with.
 
 # Overview:
+
 The objective of this HOL is to understand, learn and experience how to deploy a cloud native application to any supported kubernetes running either on-premises, any other cloud provider location or at the edge. The application will be deployed to an Azure App service (Github Actions) and Azure SQL managed instance.
 
 For the purpose of this part of the HOL you will be deploying a base AKS cluster that will represent an on-premises location as mentioned above. We are using AKS here to simplify deployment and to leverage the cloud load balancer instead of creating everything from scratch at this time. You can however, use any existing supported kubernetes supported by CNCF and Azure Arc. Cloud native anywhere with Azure Arc enables you to deploy Azure cloud native services and brings the intelligent cloud services to any infrastructure.
