@@ -691,7 +691,7 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 - Check *Deployments* and/or *Pods* of the App Service Namespace in the K8s cluster. All Pods should be in the running state
 - Uplaod some blob images and check that the Logic App worlflow gets triggered
 
-
+![logic-app-3](./Assets/logic-app-3.png)
 
 #### Event Grid
 
