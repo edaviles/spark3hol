@@ -1,4 +1,4 @@
-# Deploy Cloud Native Apps - CAPZ K8s Cluster (WIP)
+# Deploy Cloud Native Apps - CAPZ K8s Cluster
 
 ## Introduction
 
@@ -138,68 +138,76 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
 5. **Install** following tools for creation and management of the cluster and its associated resources
 
-   1. (Optional) **Chocolatey**
-
-      ```bash
-      # Follow this link and install Chocolatey latest
-      https://chocolatey.org/install
-      ```
+   
 
    2. **Azure CLI**
 
       ```bash
       # Follow this link and install Azure CLI latest
-      https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-windows?tabs=azure-cli
+      curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
       ```
 
    3. **Kubectl**
 
       ```bash
-      choco install kubernetes-cli
+      curl -LO https://dl.k8s.io/release/v1.21.0/bin/linux/amd64/kubectl
+      sudo install -o root -g root -m 0755 k /usr/local/bin/kubectl 
+      ```
       
-      # Otherwise, follow the various options at -
-      https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/ 
-      ```
-
-   4. (Optional) **Helm**
-
-      ```
-      choco install kubernetes-helm
-      ```
-
-   5. (Optional) **PowerShell Core**
+   3. **Kind** - *As Management Cluster for CAPZ*
 
       ```bash
-      # Follow this link and install PowerShell Core for Windows
-      https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-windows?view=powershell-7.1
+      curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-linux-amd64
+      chmod +x ./kind
+      sudo mv ./kind /usr/local/bin
+      ```
+
+   4. **Helm**
+
+      ```bash
+      sudo snap install helm --classic
       
-      # Install Az module for communicating to Azure over Az cmdlet
+      OR,
+      
+      curl https://baltocdn.com/helm/signing.asc | sudo apt-key add -
+      sudo apt-get install apt-transport-https --yes
+      echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+      sudo apt-get update
+      sudo apt-get install helm
+      ```
+
+   5. **ClusterCtl**
+
+      ```bash
+      curl -L https://github.com/kubernetes-sigs/cluster-api/releases/download/v0.3.20/clusterctl-linux-amd64 -o clusterctl
+      ```
+
+   6. (Optional) **PowerShell Core**
+
+      ```bash
+      # Update the list of packages
+      sudo apt-get update
+      
+      # Install pre-requisite packages.
+      sudo apt-get install -y wget apt-transport-https software-properties-common
+      
+      # Download the Microsoft repository GPG keys
+      wget -q https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb
+      
+      # Register the Microsoft repository GPG keys
+      sudo dpkg -i packages-microsoft-prod.deb
+      
+      # Update the list of packages after we added packages.microsoft.com
+      sudo apt-get update
+      
+      # Install PowerShell
+      sudo apt-get install -y powershell
+      
+      # Inatall Az Modules
       Install-Module -Name Az -AllowClobber
-      ```
-
-   6. (Optional) **Infra App** - *For monitoring Cluster resources*
-
-      ```bash
-      # Follow this link and install Lens for Windows
-      https://infra.app/
-      ```
-
-   7. (Optional) **Visual Studio Code**
-
-      ```bash
-      # Follow this link and install Visual Studio Code
-      # This is for better management of scripts and commands
-      https://code.visualstudio.com/docs/setup/windows
-      ```
-
-   8. (*Optional*) **Docker**
-
-      ```bash
-      # Follow this link and install Docker Desktop latest for Windows
-      https://docs.docker.com/docker-for-windows/install/
       
-      # Install this only if you want to play with Docker images locally
-      # This workshop will use a different techniqe so installation of Docker is not needed
+      # Start PowerShell
+      pwsh
       ```
 
 6. The **Jump Server** is now ready to be used for subsequent deployments
@@ -208,9 +216,11 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
 #### Working Resources
 
-## <u>Architecture Diagram - CAPZ - TBD</u>
-
 ![conceptual-cluster-connect](./Assets/conceptual-cluster-connect.png)
+
+**<u>Agent Connect - *Courtsey Microsoft docs*</u>**
+
+
 
 1. **Set CLI** variables for easy usage and reference
 
@@ -496,6 +506,10 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
     ![conceptual-extensions](./Assets/conceptual-extensions.png)
 
+    **<u>K8s-Extensions - *Courtsey Microsoft docs*</u>**
+
+    
+
 22. **Retrieve** the *ExtensionId* to be used in subsequent steps
 
     ```bash
@@ -531,6 +545,10 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
       ```
 
       ![conceptual-arc-platform-layers](./Assets/conceptual-arc-platform-layers.png)
+      
+      **<u>Cluster Location - *Courtsey Microsoft docs*</u>**
+      
+      
 
 24. **Check** the status of CustomLocation creation process
 
@@ -563,7 +581,7 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
       --static-ip $staticIp
       ```
 
-27. Check Kueb Environment creation process
+27. **Check** *Kube Environment* creation process
 
     ```bash
     az appservice kube show \
@@ -575,11 +593,25 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
 
 
+![svc-pods-1](./Assets/svc-pods-1.png)
+
+**<u>Pods in App Service Extension *namespace*</u>**
+
+
+
+![svc-pods-2](./Assets/svc-pods-2.png)
+
+**<u>Pods running the Application Services - *App Service, Azure Function and Logic App* (*Standard*)</u>**
+
 #### App Services
 
 ![app-service1](./Assets/app-service1.png)
 
-![app-service2](./Assets/app-service2.png)
+​										**<u>Deploy Web App from project workspace - VSCode</u>**
+
+![app-service-2](./Assets/app-service-2.png)
+
+​										**<u>Deploy Web App from Azure plugin - VSCode</u>**
 
 - This execise uses a simple API App in NodeJS - **PostAPIApp** for this purpose. One can use any App Service or Web API for this purpose
 
@@ -605,9 +637,17 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
 #### Function App
 
-![function-1](./Assets/function-1.png)
+
 
 ![function-2](./Assets/function-2.png)
+
+​										**<u>Deploy Function App from project workspace - VSCode</u>**
+
+
+
+![function-1](./Assets/function-1.png)
+
+​										**<u>Deploy Function App from Azure plugin - VSCode</u>**
 
 - This execise uses a simple *Http Triggerred* Azure Function in .NetCore - **PostMessageApp** for this purpose. One can use any type of Azure Function of their choice
 - Visual Studio Code or Visual Studio both have easy integration with Azure Resource management. Any other IDE with appropriate plugins can be used as well. This exercise would use VSCode as an option
@@ -626,7 +666,13 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
 ![logic-app-1](./Assets/logic-app-1.png)
 
+​										**<u>Deploy Logic App from project workspace - VSCode</u>**
+
+
+
 ![logic-app-2](./Assets/logic-app-2.png)
+
+​										**<u>Deploy Logic App from Azure plugin - VSCode</u>**
 
 - This execise uses a simple *Blob Triggerred* Logic App Created Locally - **WorkflowApp** for this purpose
 - Few points to note here on the choice of Creation path to Azure and subsequent Deployment onto K8s cluster
@@ -690,6 +736,18 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
   az k8s-extension show -c $connectedClusterName --cluster-type connectedClusters \
   -n $evgExtensionName -g $arcK8sResourceGroup
   ```
+
+  ![eventgrid-4](./Assets/eventgrid-4.png)
+
+  **<u>Pods running EventGrid *namespace*</u>**
+
+  
+
+  ![eventgrid-5](./Assets/eventgrid-5.png)
+
+  **<u>Arc Enabled Services </u>**
+
+- Make sure to Select the EventGrid service from the dropdown before creating the EventGrid Topic - otherwise Topic creation would fail with Forbidden error; as it would not recognize the target deployment Location - which should be the *Custom Location* in the case
 
 - Visual Studio Code or Visual Studio both DONOT have integration with Azure Arc flavour for EventGrid as of now. So, creating the Topic in portal is the only option as of now 
 
@@ -760,15 +818,34 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
 
 
-### Future Enhancements
+## References
 
-The purpose of thsi exwercise was to shocasde te power of Azure ARC and how easily various Cloud Native application services can be deployed and run anywhere.
+**Azure Arc Enabled K8s**:
 
-The example can be extended to implement a more connected workflow e.g.
+- https://docs.microsoft.com/en-us/azure/azure-arc/kubernetes/
+- https://docs.microsoft.com/en-us/azure/azure-arc/kubernetes/conceptual-agent-architecture
+- https://docs.microsoft.com/en-us/azure/azure-arc/kubernetes/conceptual-extensions
+- https://docs.microsoft.com/en-us/azure/azure-arc/kubernetes/conceptual-cluster-connect
+- https://docs.microsoft.com/en-us/azure/azure-arc/kubernetes/conceptual-custom-locations
 
-**API App POST call -> Send an EventGrid Message -> Which inturn calls Azure Function -> Processes the Message and based on some decision Calls Logic App to notify the end user or other intended users!**
+**AppServices on K8s**
 
-## Diagram
+- https://docs.microsoft.com/en-us/azure/app-service/quickstart-arc
+- https://docs.microsoft.com/en-us/azure/app-service/overview-arc-integration
+- https://docs.microsoft.com/en-us/azure/app-service/manage-create-arc-environment
+
+**EventGrid on K8s** 
+
+- https://docs.microsoft.com/en-us/azure/event-grid/kubernetes/
+- https://docs.microsoft.com/en-us/azure/event-grid/kubernetes/create-topic-subscription
+
+**DataServices on K8s**
+
+- https://docs.microsoft.com/en-us/azure/azure-arc/data/overview
+- https://docs.microsoft.com/en-us/azure/azure-arc/data/create-data-controller-direct-cli
+- https://docs.microsoft.com/en-us/azure/azure-arc/data/create-sql-managed-instance
+
+## 
 
 
 
