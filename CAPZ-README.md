@@ -575,24 +575,39 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
 
 
-## <u>Architecture Diagram - CAPZ - AppFlow - TBD</u>
-
-
-
 #### App Services
 
-- This execise uses a simple API App in NodeJS - **HelloJSApp** for this purpose. One can use any App Service or Web API for this purpose
+![app-service1](./Assets/app-service1.png)
+
+![app-service2](./Assets/app-service2.png)
+
+- This execise uses a simple API App in NodeJS - **PostAPIApp** for this purpose. One can use any App Service or Web API for this purpose
+
 - Visual Studio Code or Visual Studio both have easy integration with Azure Resource management. Any other IDE with appropriate plugins can be used as well. This exercise would use VSCode as an option
+
 - Open App Service root folder in Visual Studio Code
+
 - Right Click and **Deploy** to API App. Please note one can create the Web App/API App in the portal and then manage deployment from VSCode
+
 - VSCode would ask for a new App to be Created Or Deploy on an existing one
+
 - The Target Location step is extremely important - ***should be the <u>CustomLocation</u> created in earlier steps***
+
 - Once the steps are completed, comeback to Azure CLI
+
 - Check *Deployments* and/or *Pods* of the App Service Namespace in the K8s cluster. All Pods should be in the running state
+
 - Go to Azure Portal and Check the App Service resource; in the Overview blade it will show up the Web API access URL
+
 - Check the URL in te browser; use Postman or any REST client to call to test different paths of the API App
 
+  
+
 #### Function App
+
+![function-1](./Assets/function-1.png)
+
+![function-2](./Assets/function-2.png)
 
 - This execise uses a simple *Http Triggerred* Azure Function in .NetCore - **PostMessageApp** for this purpose. One can use any type of Azure Function of their choice
 - Visual Studio Code or Visual Studio both have easy integration with Azure Resource management. Any other IDE with appropriate plugins can be used as well. This exercise would use VSCode as an option
@@ -609,6 +624,10 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
 #### Logic App
 
+![logic-app-1](./Assets/logic-app-1.png)
+
+![logic-app-2](./Assets/logic-app-2.png)
+
 - This execise uses a simple *Blob Triggerred* Logic App Created Locally - **WorkflowApp** for this purpose
 - Few points to note here on the choice of Creation path to Azure and subsequent Deployment onto K8s cluster
   - This Logic App type would be **<u>Standard</u>** and **Stateful** which is actually a **<u>Single Tenant Logic App</u>**; rather than the *Consumption* type Logic App which is *Multi-Tenant* Logic App
@@ -622,12 +641,17 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 - The Target Location step is extremely important - ***should be the <u>CustomLocation</u> created in earlier steps***
 - Once the steps are completed, comeback to Azure CLI
 - Check *Deployments* and/or *Pods* of the App Service Namespace in the K8s cluster. All Pods should be in the running state
-- Go to Azure Portal and Check the App Service resource; in the Overview blade it will show up the Web API access URL
-- Check the URL in te browser; use Postman or any REST client to call 
+- Uplaod some blob images and check that the Logic App worlflow gets triggered
 
 
 
 #### Event Grid
+
+![eventgrid-1](./Assets/eventgrid-1.png)
+
+![eventgrid-2](./Assets/eventgrid-2.png)
+
+![eventgrid-3](./Assets/eventgrid-3.png)
 
 - This exercise uses a simple *Event Grid Topic* - **PostTopic** for this purpose
 
@@ -664,7 +688,7 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
   ```bash
   az k8s-extension show -c $connectedClusterName --cluster-type connectedClusters \
-  -n $evgExtensionName -g $arcResourceGroupName
+  -n $evgExtensionName -g $arcK8sResourceGroup
   ```
 
 - Visual Studio Code or Visual Studio both DONOT have integration with Azure Arc flavour for EventGrid as of now. So, creating the Topic in portal is the only option as of now 
@@ -674,20 +698,20 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 - **Check** *Topic* details
 
   ```bash
-  topicId=$(az eventgrid topic show --name $topicName --resource-group $arcServicesResourceGroup --query id -o tsv)
+  topicId=$(az eventgrid topic show --name $evgTopicName --resource-group $arcSvcResourceGroup --query id -o tsv)
   echo $topicId
   ```
 
 - Create *Event Subscription* for the above topic
 
   ```bash
-  az eventgrid event-subscription create --name $eventSubName --source-resource-id $topicId \
+  az eventgrid event-subscription create --name $evgSubscriptionName --source-resource-id $topicId \
   --endpoint <event_subscription_endpoint>
   
    # e.g. function app endpoint that we had created earlier
   ```
 
-- Check *Deployments* and/or *Pods* of the EventGrid Namespace in the K8s cluster. All Pods should be in the running state
+- Check *Deployments* and/or *Pods* of the EventGrid Namespace in the K8s cluster. All Pods should be in the *running* state
 
   ```bash
   k-capz get po -n $eventGridnamespace
@@ -700,13 +724,13 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 - Get *EventGrid* **Endpoint** details
 
   ```bash
-  eventGridEndpoint=$(az eventgrid topic show --name $topicName -g $arcServicesResourceGroup --query "endpoint" --output tsv)
+  eventGridEndpoint=$(az eventgrid topic show --name $evgTopicName -g $arcSvcResourceGroup --query "endpoint" --output tsv)
   ```
 
 - Get *EventGrid* **Key** details
 
   ```bash
-  eventGridKey=$(az eventgrid topic key list --name $topicName -g $arcServicesResourceGroup --query "key1" --output tsv)
+  eventGridKey=$(az eventgrid topic key list --name $evgTopicName -g $arcSvcResourceGroup --query "key1" --output tsv)
   ```
 
 - Make an Http call using Curl being within the Pod; this would send an event to Event Grid topic
@@ -734,7 +758,19 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
 - This in-turn calls the subscription endpoint; check if the PostMessageApp Function being called
 
-  
+
+
+### Future Enhancements
+
+The purpose of thsi exwercise was to shocasde te power of Azure ARC and how easily various Cloud Native application services can be deployed and run anywhere.
+
+The example can be extended to implement a more connected workflow e.g.
+
+**API App POST call -> Send an EventGrid Message -> Which inturn calls Azure Function -> Processes the Message and based on some decision Calls Logic App to notify the end user or other intended users!**
+
+## Diagram
+
+
 
 
 
