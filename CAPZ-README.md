@@ -129,12 +129,14 @@ Now for deploying Cloud Native Applications on to K8s - we would use *Azure Arc 
 
 -  **Create** VNet and SubNet for Jump Server VM
 
-- **Create** a Jump Server VM - preferred is Windows VM so that all visualisation tools like **Lens** etc. can be used to view the cluster status at runtime. The one used for this workshop was - 
+- **Create** a Jump Server VM - preferred is Ubuntu VM. The one used for this workshop was - 
 
-   - OS - **Windows Server 2019 DC - v1809**
+   - OS - **Ubuntu-2004-LTS**
    - Size  - **Standard DS2 v2 (2 vcpus, 7 GiB memory)**
+   
+   *Also, this exercise has been tested with MacOS as well*
 
-4. **RDP** to the *Windows VM*
+4. **SSH** to the *Jump Server VM*
 
 5. **Install** following tools for creation and management of the cluster and its associated resources
 
