@@ -164,7 +164,7 @@ More details here: https://docs.microsoft.com/en-us/azure/security-center/defend
     --cluster-name $clusterName \
     --resource-group $groupName \
     --cluster-type connectedClusters \
-    --extension-type Microsoft.AzureMonitor.Containers
+    --extension-type Microsoft.AzureMonitor.Containers \
     --configuration-settings logAnalyticsWorkspaceResourceID=$wsId
 
     # Ensure you have Azure Defender Plan turned on in Azure Security Center before you create the Defender extension
